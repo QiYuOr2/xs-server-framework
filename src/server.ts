@@ -8,7 +8,6 @@ import url from 'url';
 import { Method, Route, RouteHandle } from './interfaces';
 import fs from 'fs';
 import { parsePathname } from './utils';
-import path from 'path';
 
 export default class Server {
   private static instance: Server;
