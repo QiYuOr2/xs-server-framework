@@ -1,17 +1,13 @@
-import { IncomingMessage } from 'http';
+import { IncomingMessage, ServerResponse } from 'http';
 
-export type ResType<T> = {
-  code: number;
-  message: string;
-  data?: T;
+export type Context = {
+  request: IncomingMessage;
+  response: ServerResponse;
 };
-
 /**
  * 路由处理函数
  */
-export type RouteHandle<T> = (
-  req: IncomingMessage
-) => ResType<T> | Promise<ResType<T>>;
+export type RouteHandle<T> = (ctx: Context) => T | Promise<T>;
 export type Method = 'GET' | 'POST' | 'PUT' | 'DELETE';
 
 export type Route<T> = {

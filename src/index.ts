@@ -1,3 +1,4 @@
+import path from 'path';
 import Server from './server';
 import { bodyParse, queryParse } from './utils';
 
@@ -7,9 +8,22 @@ const server = Server.create(config.port, function () {
   console.log(`running in ${config.port}`);
 });
 
+// 设置静态服务
+server.setStatic('/public', path.join(__dirname, './example'));
+
 // 测试registerRouter
 // powershell & bash: curl http://localhost:3000/hello
 server.registerRouter([
+  {
+    pathname: '/',
+    method: 'GET',
+    handle: () => {
+      return {
+        code: 0,
+        message: '欢迎使用XS框架',
+      };
+    },
+  },
   {
     pathname: '/hello',
     method: 'GET',
@@ -23,9 +37,9 @@ server.registerRouter([
 ]);
 
 // 测试GET
-// powershell & bash: curl http://localhost:3000/world?name=1
-server.Get('/world', (req) => {
-  const query = queryParse(req);
+// powershell & bash: curl http://localhost:3000/hello/world?name=1
+server.Get('/hello/world', (ctx) => {
+  const query = queryParse(ctx.request);
 
   return {
     code: 0,
@@ -37,8 +51,8 @@ server.Get('/world', (req) => {
 // 测试POST
 // powershell: curl http://localhost:3000/hello -Method Post /* 不知道powershell怎么传body参数 */
 // bash: curl http://localhost:3000/hello -X POST -d '{"name": 123}'
-server.Post('/hello', async (req) => {
-  const body = await bodyParse(req);
+server.Post('/hello', async (ctx) => {
+  const body = await bodyParse(ctx.request);
 
   return {
     code: 0,

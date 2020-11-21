@@ -1,39 +1,30 @@
-import http from 'http';
+import http, {
+  IncomingMessage,
+  OutgoingHttpHeader,
+  OutgoingHttpHeaders,
+  ServerResponse,
+} from 'http';
 import url from 'url';
 import { Method, Route, RouteHandle } from './interfaces';
+import fs from 'fs';
 import { parsePathname } from './utils';
+import path from 'path';
 
 export default class Server {
   private static instance: Server;
   private httpServer: http.Server;
   private router: Router;
+  private header: OutgoingHttpHeaders | OutgoingHttpHeader[];
+  private staticPath: string[] = [];
+  private pathToDir: Map<string, string> = new Map();
 
   private constructor(port: number, listenCallback?: () => void) {
     this.httpServer = http.createServer();
     this.router = new Router();
     this.httpServer.listen(port, listenCallback);
+    this.header = { 'Content-Type': 'application/json;charset=utf-8' };
 
-    this.httpServer.on('request', async (req, res) => {
-      res.writeHead(200, { 'Content-Type': 'application/json;charset=utf-8' });
-      const pathname = url.parse(req.url, true).pathname || '';
-      const firstPath = parsePathname(pathname)[1]
-        ? `/${parsePathname(pathname)[1]}`
-        : '/';
-
-      const handle = this.router.getRouter(req.method).get(firstPath);
-
-      if (handle) {
-        if (
-          Object.prototype.toString.call(handle) == '[object AsyncFunction]'
-        ) {
-          res.end(JSON.stringify(await handle(req)));
-        } else {
-          res.end(JSON.stringify(handle(req)));
-        }
-      } else {
-        res.end(`${pathname} not found`);
-      }
-    });
+    this.openListenRequest();
   }
 
   public static create(port: number, listenCallback?: () => void) {
@@ -41,6 +32,51 @@ export default class Server {
       Server.instance = new Server(port, listenCallback);
     }
     return Server.instance;
+  }
+
+  /**
+   * 开启请求监听
+   */
+  private openListenRequest() {
+    this.httpServer.on('request', async (req, res) => {
+      res.writeHead(200, this.header);
+
+      const pathname = url.parse(req.url, true).pathname || '';
+      const firstPath = parsePathname(pathname)[1]
+        ? `/${parsePathname(pathname)[1]}`
+        : '/';
+
+      if (this.staticPath.includes(firstPath)) {
+        const filePath =
+          this.pathToDir.get(firstPath) +
+          pathname.replace(firstPath, '').replace(/\//g, '\\');
+
+        return this.outputFile(filePath, res);
+      }
+
+      const handle = this.router.getRouter(req.method).get(pathname);
+
+      if (handle) {
+        if (
+          Object.prototype.toString.call(handle) === '[object AsyncFunction]'
+        ) {
+          res.end(
+            JSON.stringify(await handle({ request: req, response: res }))
+          );
+        } else {
+          res.end(JSON.stringify(handle({ request: req, response: res })));
+        }
+      } else {
+        res.end(`${pathname} not found`);
+      }
+    });
+  }
+
+  /**
+   * 设置全局Header
+   */
+  public setHeader(header: OutgoingHttpHeaders | OutgoingHttpHeader[]) {
+    this.header = header;
   }
 
   public registerRouter(routes: Route<any>[]) {
@@ -76,6 +112,24 @@ export default class Server {
       pathname: path,
       method: 'DELETE',
       handle,
+    });
+  }
+
+  public setStatic(path: string, dirPath: string) {
+    this.staticPath.push(path);
+    this.pathToDir.set(path, dirPath);
+  }
+
+  private outputFile(pathname: string, res: ServerResponse) {
+    fs.readFile(pathname, function (err, fileContent) {
+      if (err) {
+        res.writeHead(404, 'not Found');
+        res.end('<h1>Not Found!</h1>');
+      } else {
+        res.writeHead(200, 'okay');
+        res.write(fileContent, 'binary');
+        res.end();
+      }
     });
   }
 }
