@@ -9,7 +9,7 @@ const server = Server.create(config.port, function () {
 });
 
 // 设置静态服务
-server.setStatic('/public', path.join(__dirname, './example'));
+server.setStatic('/public', path.join(__dirname, './static'));
 
 // 测试registerRouter
 // powershell & bash: curl http://localhost:3000/hello
