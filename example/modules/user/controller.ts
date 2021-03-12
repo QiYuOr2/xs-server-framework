@@ -1,6 +1,6 @@
-import Controller from '../../lib/decorators/controller';
-import { Query } from '../../lib/decorators/httpParams';
-import { Get } from '../../lib/decorators/method';
+import Controller from '../../../lib/decorators/controller';
+import { Query } from '../../../lib/decorators/httpParams';
+import { Get } from '../../../lib/decorators/method';
 
 @Controller('/user')
 export default class UserContorller {

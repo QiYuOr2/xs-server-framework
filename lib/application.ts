@@ -6,9 +6,11 @@ import { HttpMethod } from './decorators/method';
 import { generateRouterKey } from './common/utils';
 import { Router } from './decorators/router';
 import Context from './context';
+import composeMiddleware, { Middleware } from './common/composeMiddleware';
 
 export default class Application {
   private static httpServer: http.Server;
+  private static middlewares: Middleware[] = [];
 
   /**
    * 创建http server
@@ -21,8 +23,13 @@ export default class Application {
    * 请求处理
    */
   private static requestHandler(): http.RequestListener {
+    // 中间件
+    const fn = composeMiddleware(this.middlewares);
+
     const router: Router = Reflect.getMetadata(ROUTER, this);
     return async (request, response) => {
+      fn(request, response, () => {});
+
       const urlParse = url.parse(request.url ?? '');
       const routeKey = generateRouterKey(
         (request.method ?? 'GET') as HttpMethod,
@@ -45,6 +52,11 @@ export default class Application {
       }
       Context.send(response, urlParse.pathname ?? '', result);
     };
+  }
+
+  public static use(middleware: Middleware) {
+    this.middlewares.push(middleware);
+    return this;
   }
 
   /**

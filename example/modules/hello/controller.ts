@@ -1,6 +1,6 @@
-import Controller from '../../lib/decorators/controller';
-import { Body } from '../../lib/decorators/httpParams';
-import { Get, Post } from '../../lib/decorators/method';
+import Controller from '../../../lib/decorators/controller';
+import { Body } from '../../../lib/decorators/httpParams';
+import { Get, Post } from '../../../lib/decorators/method';
 
 @Controller('/hello')
 export default class HelloContorller {
