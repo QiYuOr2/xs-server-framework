@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "A Nodejs Web Framework",
   "scripts": {
-    "start": "npx ts-node src/index.ts"
+    "example": "ts-node example/index.ts"
   },
   "keywords": [
     "nodejs",
