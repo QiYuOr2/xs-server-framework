@@ -1,8 +1,8 @@
 import { PREFIX, ROUTEMAP, ROUTER, ROUTES } from '../common/constant';
 import { generateRouterKey } from '../common/utils';
-import { RouteKey, RouteMap } from './controller';
+import { RouteMap, RouteVal } from './controller';
 
-export type Router = Map<string, Function>;
+export type Router = Map<string, RouteVal>;
 
 /**
  * 注入路由

@@ -8,7 +8,7 @@ export default class UserContorller {
     return 'userGet';
   }
 
-  @Get()
+  @Get('/one')
   public async findOne() {
     return 'one get';
   }

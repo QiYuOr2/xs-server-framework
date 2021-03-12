@@ -1,5 +1,6 @@
-import { PREFIX, ROUTEMAP, ROUTES } from '../common/constant';
+import { BODY, PREFIX, ROUTEMAP, ROUTES } from '../common/constant';
 import { isAsync } from '../common/utils';
+import { BodyOptions } from './httpParams';
 import { HttpMethod, Route } from './method';
 
 export type RouteKey = {
@@ -7,13 +8,24 @@ export type RouteKey = {
   method: HttpMethod;
 };
 
-export type RouteMap = Map<RouteKey, Function>;
+export type RouteVal = {
+  handle: Function;
+  bodyOptions: BodyOptions[];
+};
+
+export type RouteMap = Map<RouteKey, RouteVal>;
 
 export default function Controller(prefix: string = ''): ClassDecorator {
   return (target: Function) => {
     // 前缀
     Reflect.defineMetadata(PREFIX, prefix, target);
     const routes: Route[] = Reflect.getMetadata(ROUTES, target.prototype);
+
+    // body参数
+    const bodyOptions: BodyOptions[] | undefined = Reflect.getMetadata(
+      BODY,
+      target.prototype
+    );
 
     // route - 方法 映射表
     const routeMap: RouteMap = new Map();
@@ -24,10 +36,18 @@ export default function Controller(prefix: string = ''): ClassDecorator {
         );
       }
 
-      routeMap.set(
-        { path: route.path, method: route.method },
-        target.prototype[route.propertyKey]
-      );
+      let routeVal: RouteVal = {
+        handle: target.prototype[route.propertyKey],
+        bodyOptions: [],
+      };
+
+      bodyOptions?.forEach((option) => {
+        if (option.propertyKey === route.propertyKey) {
+          routeVal.bodyOptions.push(option);
+        }
+      });
+
+      routeMap.set({ path: route.path, method: route.method }, routeVal);
     });
 
     Reflect.defineMetadata(ROUTEMAP, routeMap, target);

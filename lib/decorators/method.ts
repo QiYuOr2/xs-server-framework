@@ -1,4 +1,5 @@
-import { ROUTES } from '../common/constant';
+import { BODY, ROUTES } from '../common/constant';
+import { BodyOptions } from './httpParams';
 
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
 
@@ -6,6 +7,7 @@ export interface Route {
   propertyKey: string | symbol;
   method: HttpMethod;
   path: string;
+  body?: BodyOptions[];
 }
 
 export type RouterDecoratorFactory = (path?: string) => MethodDecorator;
@@ -13,11 +15,14 @@ export function createRouterDecorator(
   method: HttpMethod
 ): RouterDecoratorFactory {
   return (path?: string) => (target: any, propertyKey: string | symbol) => {
+    const body = Reflect.getMetadata(BODY, target);
     const route: Route = {
       propertyKey,
       method,
       path: path || '',
+      body,
     };
+
     if (!Reflect.getMetadata(ROUTES, target)) {
       Reflect.defineMetadata(ROUTES, [], target);
     }

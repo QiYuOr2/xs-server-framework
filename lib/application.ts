@@ -1,9 +1,11 @@
 import 'reflect-metadata';
 import http from 'http';
+import url from 'url';
 import { ROUTER } from './common/constant';
 import { HttpMethod } from './decorators/method';
 import { generateRouterKey } from './common/utils';
 import { Router } from './decorators/router';
+import Context from './context';
 
 export default class Application {
   private static httpServer: http.Server;
@@ -21,13 +23,21 @@ export default class Application {
   private static requestHandler(): http.RequestListener {
     const router: Router = Reflect.getMetadata(ROUTER, this);
     return async (request, response) => {
+      const urlParse = url.parse(request.url ?? '');
       const routeKey = generateRouterKey(
         (request.method ?? 'GET') as HttpMethod,
-        request.url ?? ''
+        urlParse.pathname ?? ''
       );
 
-      const result = await router.get(routeKey)?.();
-      response.end(JSON.stringify(result));
+      const handle = router.get(routeKey)?.handle;
+      // 处理body
+      const bodyOptions = router.get(routeKey)?.bodyOptions;
+      let result;
+      const body = await Context.bodyParser(request, bodyOptions);
+      if (handle) {
+        result = await handle(...body);
+      }
+      Context.send(response, urlParse.pathname ?? '', result);
     };
   }
 
