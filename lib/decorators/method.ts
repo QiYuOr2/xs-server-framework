@@ -1,5 +1,5 @@
 import { BODY, ROUTES } from '../common/constant';
-import { BodyOptions } from './httpParams';
+import { Options } from './httpParams';
 
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
 
@@ -7,7 +7,7 @@ export interface Route {
   propertyKey: string | symbol;
   method: HttpMethod;
   path: string;
-  body?: BodyOptions[];
+  body?: Options[];
 }
 
 export type RouterDecoratorFactory = (path?: string) => MethodDecorator;

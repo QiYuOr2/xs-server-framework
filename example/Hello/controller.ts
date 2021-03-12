@@ -8,6 +8,7 @@ export default class HelloContorller {
   public async find() {
     return '123get';
   }
+
   @Post()
   public async create(
     @Body('hello') hello: string,
@@ -16,10 +17,7 @@ export default class HelloContorller {
     return {
       code: 0,
       message: 'success',
-      data: {
-        hello,
-        world,
-      },
+      data: hello + world,
     };
   }
 }

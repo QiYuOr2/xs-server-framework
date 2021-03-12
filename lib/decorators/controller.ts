@@ -1,6 +1,6 @@
-import { BODY, PREFIX, ROUTEMAP, ROUTES } from '../common/constant';
+import { BODY, PREFIX, QUERY, ROUTEMAP, ROUTES } from '../common/constant';
 import { isAsync } from '../common/utils';
-import { BodyOptions } from './httpParams';
+import { Options } from './httpParams';
 import { HttpMethod, Route } from './method';
 
 export type RouteKey = {
@@ -10,7 +10,8 @@ export type RouteKey = {
 
 export type RouteVal = {
   handle: Function;
-  bodyOptions: BodyOptions[];
+  bodyOptions: Options[];
+  queryOptions: Options[];
 };
 
 export type RouteMap = Map<RouteKey, RouteVal>;
@@ -22,8 +23,14 @@ export default function Controller(prefix: string = ''): ClassDecorator {
     const routes: Route[] = Reflect.getMetadata(ROUTES, target.prototype);
 
     // body参数
-    const bodyOptions: BodyOptions[] | undefined = Reflect.getMetadata(
+    const bodyOptions: Options[] | undefined = Reflect.getMetadata(
       BODY,
+      target.prototype
+    );
+
+    // query参数
+    const queryOptions: Options[] | undefined = Reflect.getMetadata(
+      QUERY,
       target.prototype
     );
 
@@ -39,11 +46,18 @@ export default function Controller(prefix: string = ''): ClassDecorator {
       let routeVal: RouteVal = {
         handle: target.prototype[route.propertyKey],
         bodyOptions: [],
+        queryOptions: [],
       };
 
       bodyOptions?.forEach((option) => {
         if (option.propertyKey === route.propertyKey) {
           routeVal.bodyOptions.push(option);
+        }
+      });
+
+      queryOptions?.forEach((option) => {
+        if (option.propertyKey === route.propertyKey) {
+          routeVal.queryOptions.push(option);
         }
       });
 

@@ -30,12 +30,18 @@ export default class Application {
       );
 
       const handle = router.get(routeKey)?.handle;
+
+      // 处理query
+      const queryOptions = router.get(routeKey)?.queryOptions;
+      Context.QueryParser(urlParse.query ?? '', queryOptions);
+
       // 处理body
       const bodyOptions = router.get(routeKey)?.bodyOptions;
+      Context.bodyParser(request, bodyOptions);
+
       let result;
-      const body = await Context.bodyParser(request, bodyOptions);
       if (handle) {
-        result = await handle(...body);
+        result = await handle(...Context.paramList);
       }
       Context.send(response, urlParse.pathname ?? '', result);
     };

@@ -1,9 +1,10 @@
 import http from 'http';
 import qs from 'querystring';
 import { isObject, isUndefined } from './common/utils';
-import { BodyOptions } from './decorators/httpParams';
+import { Options } from './decorators/httpParams';
 
 export default class Context {
+  public static paramList: unknown[] = [];
   /**
    * 发送响应
    * @param response 响应
@@ -30,38 +31,40 @@ export default class Context {
    */
   public static bodyParser(
     request: http.IncomingMessage,
-    bodyOptions?: BodyOptions[]
-  ): Promise<unknown[]> {
-    return new Promise((resolve, reject) => {
-      if (bodyOptions) {
-        let body: Uint8Array[] = [];
+    bodyOptions?: Options[]
+  ) {
+    if (bodyOptions) {
+      let body: Uint8Array[] = [];
 
-        request.on('error', (err) => {
-          reject(err);
+      request.on('error', (err) => {
+        throw new Error(err.message);
+      });
+
+      request.on('data', (chunk) => {
+        body.push(chunk);
+      });
+
+      request.on('end', () => {
+        const data = Buffer.concat(body).toString();
+        const parseData = qs.parse(data);
+
+        // 获取需要的body参数
+        const resultData: unknown[] = [];
+
+        bodyOptions.forEach((option) => {
+          this.paramList[option.index] = parseData[option.name];
         });
+      });
+    }
+  }
 
-        request.on('data', (chunk) => {
-          body.push(chunk);
-        });
+  public static QueryParser(query: string, queryOptions?: Options[]) {
+    if (queryOptions) {
+      const parseData = qs.parse(query);
 
-        request.on('end', () => {
-          const data = Buffer.concat(body).toString();
-          const parseData = qs.parse(data);
-
-          // 获取需要的body参数
-          const dataKeys = Object.keys(parseData);
-          const existKeys = bodyOptions.map((option) => option.name);
-          const resultData: unknown[] = [];
-
-          dataKeys.forEach((key) => {
-            if (existKeys.includes(key)) {
-              resultData.push(parseData[key]);
-            }
-          });
-
-          resolve(resultData);
-        });
-      }
-    });
+      queryOptions.forEach((option) => {
+        this.paramList[option.index] = parseData[option.name];
+      });
+    }
   }
 }
